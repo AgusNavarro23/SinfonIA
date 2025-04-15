@@ -1,5 +1,6 @@
 <?php
   session_start();
+  session_regenerate_id(true);
   if (isset($_REQUEST['sesion']) && $_REQUEST['sesion']=="cerrar" ){
     session_destroy();
     header("location: login.php");
