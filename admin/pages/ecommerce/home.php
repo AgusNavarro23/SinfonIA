@@ -118,6 +118,43 @@
         </section>
     <!--end::HOME-->
 
+    <!--begin::Footer-->
+
+    <section class="icons-container">
+        <div class="icons">
+            <i class="bi bi-airplane-fill"></i>
+            <div class="content">
+                <h2>Envió Gratis</h2>
+                <p>Con una compra mayor a $50.000 tenés envio gratis a cualquier lugar del país.</p>
+            </div>
+        </div>
+
+        <div class="icons">
+            <i class="bi bi-tags-fill"></i>
+            <div class="content">
+                <h2>Mejores Productos</h2>
+                <p>Contamos con los instrumentos de mayor calidad.</p>
+            </div>
+        </div>
+
+        <div class="icons">
+            <i class="bi bi-lock-fill"></i>
+            <div class="content">
+                <h2>Pagos Seguros</h2>
+                <p>Contás con la mayor seguridad para realizar tus pagos.</p>
+            </div>
+            
+        </div>
+        <div class="icons">
+            <i class="bi bi-credit-card-fill"></i>
+            <div class="content">
+                <h2>Métodos de Pago</h2>
+                <p>Aceptamos todos los métodos de pago, desde tarjetas hasta transferencias bancaras.</p>
+            </div>
+        </div>
+    </section>
+
+    <!--end::Footer-->
 
 
 </body>
