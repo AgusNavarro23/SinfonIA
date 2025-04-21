@@ -1,6 +1,7 @@
 <?php
 include_once "db_ecommerce.php";
 $con = mysqli_connect($host, $user, $pass, $db);
+$con->set_charset("utf8");
 ?>
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />

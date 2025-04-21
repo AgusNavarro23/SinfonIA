@@ -1,6 +1,7 @@
 <?php
 include_once "db_ecommerce.php";
 $con = mysqli_connect($host, $user, $pass, $db);
+$con->set_charset("utf8");
 ?>
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
@@ -50,6 +51,20 @@ $con = mysqli_connect($host, $user, $pass, $db);
         $res = mysqli_query($con, $query);
 
         if ($res) {
+            $producto_id = mysqli_insert_id($con);
+                    // Procesar imágenes
+            if (!empty($_FILES['imagenes']['name'][0])) {
+                $total_imagenes = count($_FILES['imagenes']['name']);
+                for ($i = 0; $i < $total_imagenes; $i++) {
+                    $nombre_img = $_FILES['imagenes']['name'][$i];
+                    $tmp = $_FILES['imagenes']['tmp_name'][$i];
+                    $ruta = "uploads/" . time() . "_" . basename($nombre_img);
+                    if (move_uploaded_file($tmp, $ruta)) {
+                        $query_img = "INSERT INTO imagenesProductos (idProducto, url_imagen) VALUES ('$producto_id', '$ruta')";
+                        mysqli_query($con, $query_img);
+                    }
+            }
+        }
             echo "<script>
                 Swal.fire({
                     icon: 'success',
@@ -83,6 +98,33 @@ $con = mysqli_connect($host, $user, $pass, $db);
         $res = mysqli_query($con, $query);
 
         if ($res) {
+            // Eliminar imágenes anteriores del sistema de archivos
+            $query_old_imgs = "SELECT url_imagen FROM imagenesProductos WHERE idProducto='$id'";
+            $res_old_imgs = mysqli_query($con, $query_old_imgs);
+            while ($old_img = mysqli_fetch_assoc($res_old_imgs)) {
+                $ruta_img = $old_img['url_imagen'];
+                if (file_exists($ruta_img)) {
+                    unlink($ruta_img); // elimina físicamente el archivo
+                }
+            }
+
+            // Eliminar registros de la base de datos
+            $query_del_imgs = "DELETE FROM imagenesProductos WHERE idProducto='$id'";
+            mysqli_query($con, $query_del_imgs);
+
+        // Subir nuevas imágenes
+        if (!empty($_FILES['imagenes']['name'][0])) {
+            $total_imagenes = count($_FILES['imagenes']['name']);
+            for ($i = 0; $i < $total_imagenes; $i++) {
+                $nombre_img = $_FILES['imagenes']['name'][$i];
+                $tmp = $_FILES['imagenes']['tmp_name'][$i];
+                $ruta = "uploads/" . time() . "_" . basename($nombre_img);
+                if (move_uploaded_file($tmp, $ruta)) {
+                    $query_img = "INSERT INTO imagenesProductos (idProducto, url_imagen) VALUES ('$id', '$ruta')";
+                    mysqli_query($con, $query_img);
+                }
+            }
+        }
             echo "<script>
                 Swal.fire({
                     icon: 'success',
@@ -106,6 +148,26 @@ $con = mysqli_connect($host, $user, $pass, $db);
         }
     }
 ?>
+<?php
+include_once "db_ecommerce.php";
+$con = mysqli_connect($host, $user, $pass, $db);
+$con->set_charset("utf8");
+
+$id = mysqli_real_escape_string($con, $_GET['id'] ?? '');
+$query = "SELECT * FROM productos WHERE id='$id'";
+$res = mysqli_query($con, $query);
+$producto = mysqli_fetch_assoc($res);
+
+$query_img = "SELECT url_imagen FROM imagenesProductos WHERE idProducto='$id'";
+$res_img = mysqli_query($con, $query_img);
+
+$imagenes = [];
+while ($img = mysqli_fetch_assoc($res_img)) {
+    $imagenes[] = $img['url_imagen'];
+}
+
+
+?>
 
 <section class="mb-4">
     <div class="row">
@@ -117,9 +179,9 @@ $con = mysqli_connect($host, $user, $pass, $db);
 
 <section>
     <div class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header d-flex align-items-center">
             <strong>Productos registrados</strong>
-            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoProducto">
+            <button type="button" class="btn btn-sm btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#modalNuevoProducto">
                 <i class="bi bi-plus-circle"></i> Nuevo Producto
             </button>
         </div>
@@ -157,6 +219,25 @@ $con = mysqli_connect($host, $user, $pass, $db);
                                 <a href="panel.php?modulo=productos&idBorrar=<?php echo $row['id'] ?>" class="btn btn-sm btn-outline-danger borrar" title="Eliminar">
                                     <i class="bi bi-trash"></i>
                                 </a>
+                                <button
+                                    class="btn btn-sm btn-outline-info detalleProductoBtn"
+                                    data-id="<?php echo $row['id'] ?>"
+                                    data-nombre="<?php echo htmlspecialchars($row['nombre']) ?>"
+                                    data-precio="<?php echo htmlspecialchars($row['precio']) ?>"
+                                    data-existencia="<?php echo htmlspecialchars($row['existencia']) ?>"
+                                    data-imagenes='<?php
+                                    $query_img = "SELECT url_imagen FROM imagenesProductos WHERE idProducto='{$row['id']}'";
+                                    $res_img = mysqli_query($con, $query_img);
+                                    $imgs = [];
+                                    while ($img = mysqli_fetch_assoc($res_img)) {
+                                        $imgs[] = $img['url_imagen'];
+                                    }
+                                    echo json_encode($imgs);
+                                    ?>'
+                                    title="Ver Detalle"
+                                    >
+                                    <i class="bi bi-eye"></i>
+                                </button>
                             </td>
                         </tr>
                     <?php } ?>
@@ -170,7 +251,7 @@ $con = mysqli_connect($host, $user, $pass, $db);
 <div class="modal fade" id="modalNuevoProducto" tabindex="-1" aria-labelledby="modalNuevoProductoLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="POST" action="">
+      <form method="POST" action="" enctype="multipart/form-data">
         <div class="modal-header">
           <h5 class="modal-title" id="modalNuevoProductoLabel">Nuevo Producto</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -188,6 +269,10 @@ $con = mysqli_connect($host, $user, $pass, $db);
             <label class="form-label">Existencia</label>
             <input type="number" class="form-control" name="existencia" required>
           </div>
+          <div class="mb-3">
+                <label class="form-label">Imágenes</label>
+                <input type="file" class="form-control" name="imagenes[]" accept="image/*" multiple>
+        </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -198,11 +283,29 @@ $con = mysqli_connect($host, $user, $pass, $db);
   </div>
 </div>
 
-<!-- Modal Editar Usuario -->
+<!-- Modal Detalle Producto -->
+
+<div class="modal fade" id="modalDetalleProducto" tabindex="-1" aria-labelledby="modalDetalleProductoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header" >
+        <h5 class="modal-title" id="modalDetalleProductoLabel">Detalle del Producto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+      <div class="modal-body">
+        <h5 id="detalleNombre" class="text-center mb-3"></h5>
+        <p><strong>Precio:</strong> $<span id="detallePrecio"></span></p>
+        <p><strong>Existencia:</strong> <span id="detalleExistencia"></span></p>
+        <div id="detalleImagenes" class="d-flex justify-content-center mb-3"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal Editar Producto -->
 <div class="modal fade" id="modalEditarProducto" tabindex="-1" aria-labelledby="modalEditarProductoLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="POST" action="">
+      <form method="POST" action="" enctype="multipart/form-data">
         <div class="modal-header">
           <h5 class="modal-title" id="modalEditarProductoLabel">Editar Producto</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -221,6 +324,10 @@ $con = mysqli_connect($host, $user, $pass, $db);
             <label class="form-label">Existencia</label>
             <input type="number" class="form-control" name="existencia" id="editExistencia" required>
           </div>
+          <div class="mb-3">
+            <label class="form-label">Imágenes</label>
+            <input type="file" class="form-control" name="imagenes[]" accept="image/*" multiple>
+        </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -274,6 +381,64 @@ $con = mysqli_connect($host, $user, $pass, $db);
             const modal = new bootstrap.Modal(document.getElementById('modalEditarProducto'));
             modal.show();
         });
+        function formatearPrecio(precio) {
+            return precio.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(',', '.');
+        }
+        $('.detalleProductoBtn').click(function () {
+        const nombre = $(this).data('nombre');
+        const precio = $(this).data('precio');
+        const existencia = $(this).data('existencia');
+        const imagenes = $(this).data('imagenes');
+
+        $('#detalleNombre').text(nombre);
+        const precioFormateado = formatearPrecio(precio);
+        $('#detallePrecio').text(precioFormateado);
+        $('#detalleExistencia').text(existencia);
+
+        let htmlImagenes = '';
+        if (imagenes && imagenes.length > 0) {
+            imagenes.forEach(function (img) {
+                htmlImagenes += `
+                    <div class="col-md-3">
+                        <img src="${img}" class="img-fluid rounded border" />
+                    </div>
+                `;
+            });
+        } else {
+            htmlImagenes = '<p class="text-muted">No hay imágenes disponibles</p>';
+        }
+
+        $('#detalleImagenes').html(htmlImagenes);
+        $('#modalDetalleProducto').modal('show');
+    });
+    
     });
 </script>
+<style>
+    /* Estilo mejorado para el modal */
+    .modal-content {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-footer {
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+    }
+
+
+    .modal-body {
+        font-family: Arial, sans-serif;
+        font-size: 1rem;
+    }
+
+    .modal-body img {
+        margin-bottom: 15px;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .modal-body img:hover {
+        transform: scale(1.09);
+    }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

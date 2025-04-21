@@ -1,5 +1,30 @@
 
-
+<?php
+            $mostrarAlerta='';
+            $mostrarUsuario='';
+            if(isset($_REQUEST['login'])){
+              session_start();
+              $email=&$_REQUEST['email']??'';
+              $password=&$_REQUEST['password']??'';
+              $password=md5($password);
+              include_once "db_ecommerce.php";
+              $con=mysqli_connect($host,$user,$pass,$db);
+              $con->set_charset("utf8");
+              $query="SELECT id,email,nombre FROM usuarios WHERE email='".$email."'and password='".$password."'";
+              $res=mysqli_query($con,$query);
+              $row=mysqli_fetch_assoc($res);
+              if($row){
+              $_SESSION['id']=$row['id'];
+              $_SESSION['email']=$row['email'];
+              $_SESSION['nombre']=$row['nombre'];
+              $nombreUsuario=$row['nombre'];
+              $mostrarAlerta='success';
+            }
+            else{
+              $mostrarAlerta='error';
+            }
+          }
+        ?>
 <!doctype html>
 <html lang="en">
   <!--begin::Head-->
@@ -48,12 +73,45 @@
     <!--end::Required Plugin(AdminLTE)-->
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+  body {
+    background: url('dist/assets/img/logo_sinfonia.png') no-repeat center center fixed;
+    background-size: cover;
+    filter: blur(0px);
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    background: inherit;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    filter: blur(8px);
+    z-index: -1;
+  }
+
+  .login-box {
+    position: relative;
+    z-index: 10;
+  }
+
+  .card {
+    background-color: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    border-radius: 1rem;
+    box-shadow: 0px 8px 20px rgba(255, 255, 0, 0.5);
+    backdrop-filter: blur(5px);
+  }
+
+  
+</style>
+
   </head>
   <!--end::Head-->
   <!--begin::Body-->
   <body class="login-page bg-body-secondary">
     <div class="login-box">
-      <div class="card card-outline card-primary">
+      <div class="card">
         <div class="card-header">
           <a
             class="link-dark text-center link-offset-2 link-opacity-100 link-opacity-50-hover"
@@ -63,31 +121,6 @@
         </div>
         <div class="card-body login-card-body">
           <p class="login-box-msg">Inicio de Sesión</p>
-          <?php
-            $mostrarAlerta='';
-            $mostrarUsuario='';
-            if(isset($_REQUEST['login'])){
-              session_start();
-              $email=&$_REQUEST['email']??'';
-              $password=&$_REQUEST['password']??'';
-              $password=md5($password);
-              include_once "db_ecommerce.php";
-              $con=mysqli_connect($host,$user,$pass,$db);
-              $query="SELECT id,email,nombre FROM usuarios WHERE email='".$email."'and password='".$password."'";
-              $res=mysqli_query($con,$query);
-              $row=mysqli_fetch_assoc($res);
-              if($row){
-              $_SESSION['id']=$row['id'];
-              $_SESSION['email']=$row['email'];
-              $_SESSION['nombre']=$row['nombre'];
-              $nombreUsuario=$row['nombre'];
-              $mostrarAlerta='success';
-            }
-            else{
-              $mostrarAlerta='error';
-            }
-          }
-        ?>
           <form method="post" onsubmit="mostrarCargando();">
             <div class="input-group mb-1">
               <div class="form-floating">

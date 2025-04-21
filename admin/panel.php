@@ -3,11 +3,11 @@
   session_regenerate_id(true);
   if (isset($_REQUEST['sesion']) && $_REQUEST['sesion']=="cerrar" ){
     session_destroy();
-    header("location: login.php");
+    header("location: index.php");
 
   }
   if(isset($_SESSION['id'])==false){
-    header("location: login.php");
+    header("location: index.php");
   }
   $modulo=$_REQUEST['modulo']??'';
 ?>
@@ -189,6 +189,13 @@
                 <a href="panel.php?modulo=ventas" class="nav-link">
                   <i class="nav-icon bi bi-cash"></i>
                   <p>Ventas</p>
+                </a>
+              </li>
+              <li class="nav-header">ECOMMERCE</li>
+              <li class="nav-item">
+                <a href="pages/ecommerce/home.php" class="nav-link">
+                  <i class="nav-icon bi bi-cart"></i>
+                  <p>Ecommerce</p>
                 </a>
               </li>
             <!--end::Sidebar Menu-->
